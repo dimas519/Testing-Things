@@ -5,14 +5,14 @@ data:
   dataIngestToken: ZHQwYzAxLkZWRTdGR0lFU1kzRFdBT0lYT1FNRURNWi5aUkhQNTZMSVA2SlFQSk9XTEFYNzJLQUZBUVRZVVBaRkdRNlpaTUpCMkNYWjZYU1JZTk1LWDZPNFVQSlpJWVND
 kind: Secret
 metadata:
-  name: k8s-oa-apponly
+  name: k8s-dimas-oa-apponly
   namespace: dynatrace
 type: Opaque
 ---
 apiVersion: dynatrace.com/v1beta3
 kind: DynaKube
 metadata:
-  name: k8s-oa-apponly
+  name: k8s-dimas-oa-apponly
   namespace: dynatrace
 spec:
   # Dynatrace apiUrl including the `/api` path at the end.
