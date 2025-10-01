@@ -1,0 +1,99 @@
+services:
+  postgres:
+    image: postgres:13.22-alpine3.22
+    container_name: stx-postgres-posts
+    restart: always
+    networks:
+      - stx
+    ports:
+      - "5432"
+    environment:
+      POSTGRES_USER: dimas
+      POSTGRES_PASSWORD: stx13579
+      POSTGRES_DB: mainSTX
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./dbDump/postgres.sql:/docker-entrypoint-initdb.d/init.sql #data existing 
+
+  redis:
+    image: redis:8.2.1-bookworm
+    container_name: stx-redis-user
+    restart: always
+    networks:
+      - stx
+    ports:
+      - "6379"
+    volumes:
+        - ./dbDump/dump.rdb:/data/dump.rdb #data existing
+
+
+  api2:
+    build:
+      context: ./api2        # lokasi Dockerfile
+      dockerfile: Dockerfile  # nama file Dockerfile (default: Dockerfile)
+    image: gchr.io/dimas519/spring-api2:latest
+    container_name: stx-api2
+    # restart: always
+    depends_on:
+      - postgres
+      # - redis
+    networks:
+      - stx
+    ports:
+      - "8082"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=mainSTX
+      - DB_USER=dimas
+      - DB_PASSWORD=stx13579
+
+  api1:
+    build:
+      context: ./api1        # lokasi Dockerfile
+      dockerfile: Dockerfile  # nama file Dockerfile (default: Dockerfile)
+    container_name: stx-api1
+    image: gchr.io/dimas519/spring-api1:latest
+    # restart: always
+    depends_on:
+      - api2
+      - redis
+    networks:
+      - stx
+    ports:
+      - "8081"
+    environment:
+      - API2_URL=api2
+      - API2_PORT=8082
+      - api2_SSL=false
+      - DB_HOST=redis
+      - DB_PORT=6379
+      - DB_PASSWORD=stx02468
+
+
+  apiGateway:
+    build:
+      context: ./apigateway         # lokasi Dockerfile
+      dockerfile: Dockerfile  # nama file Dockerfile (default: Dockerfile)
+    container_name: stxApiGateway
+    image: gchr.io/dimas519/spring-apigateway:latest
+    # restart: always
+    depends_on:
+      - api1
+    networks:
+      - stx
+    ports:
+      - "8080:8080"
+    environment:
+      - API1_URL=api1
+      - API1_PORT=8081
+      - API1_SSL=false
+
+
+
+volumes:
+  postgres-data:
+
+networks:
+  stx:
+    driver: bridge
