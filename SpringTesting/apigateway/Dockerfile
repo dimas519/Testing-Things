@@ -1,18 +1,20 @@
-FROM maven:3.9-eclipse-temurin-17 AS builderjar
-WORKDIR /apigw
-COPY . .
-RUN mvn clean package -DskipTests
-
-
-FROM alpine/java:17-jre
- 
+FROM ghcr.io/graalvm/native-image-community:21 AS buildjar
 WORKDIR /apigw
 
-# copy hasil build
-COPY --from=builderjar /apigw/target/apigw.jar apigw.jar
+COPY .mvn .mvn 
+COPY mvnw pom.xml agent.zip ./
+RUN chmod +x mvnw
 
-# Expose port default Spring Boot
+
+COPY ./pom.xml .
+COPY src ./src
+# RUN mvn  clean package -DskipTests --batch-mode
+RUN ./mvnw -e --batch-mode -DskipTests=true -Pnative -Pdynatrace-native native:compile
+
+# Stage 2: Run
+FROM oraclelinux:9-slim
+WORKDIR /apigw
+COPY --from=buildjar /apigw/target/apigateway  ./apigw
+COPY --from=buildjar /apigw/target/dynatrace ./dynatrace
 EXPOSE 8080
-
-# Gunakan JVM mode (bukan native)
-ENTRYPOINT ["java","-jar","apigw.jar"]
+ENTRYPOINT ["./apigw"]
