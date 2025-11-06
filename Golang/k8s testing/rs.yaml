@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: testgolangrs
+  labels:
+    dt: testgolang_cnf
+  annotations:
+    desc: ini testingan untuk anotation tpi rs
+
+
+
+#k8s settingnya
+spec:
+  replicas: 3
+  selector:
+    # matchLabels: #bisa salah satu
+    #   label-key1: testgolang
+    matchExpressions:  #bisa salah satu
+      - key: app
+        operator: In
+        values:
+          - testgolang
+
+#containers settingnya
+  template:
+    metadata:
+      name: testgolang
+      labels:
+       app: testgolang
+    spec:
+      containers:
+      - name: testgo
+        image: sha256:608a874edd39082b90074f9bc52d83a6ea40d3ca3cd69176483318453b399499
+        ports:
+        - containerPort: 10000
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 10000
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+          timeoutSeconds: 1
